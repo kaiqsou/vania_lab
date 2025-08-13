@@ -1,17 +1,17 @@
 {
-  "name": "modulos",
+  "name": "fase-1",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "chalk": "^5.5.0"
+    "ws": "^8.18.3"
   }
 }

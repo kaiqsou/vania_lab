@@ -16,7 +16,106 @@
         <button id="restartBtn" style="display: none">Jogar Novamente?</button>
         <script>
             window.addEventListener("load", ()=>{
+                const ws = new WebSocket(`ws://${location.host}`); // jogar na mesma maquina em navegadores diferentes
+                // const ws = new WebSocket("ws://192.168.0:3000"); // jogar por IP em máquinas diferentes 
+                const board = document.getElementById("board");
+                const status = document.getElementById("status");
+                const restartBtn = document.getElementById("restartBtn");
+                let playerSymbol = null;
+                let currentSymbol = null;
+                let gameActive = true;
+                const cells = Array.from({length: 9}, (_,i) =>{
+                    const div = document.createElement("div");
+                    div.className = "cell" // é tipo <div class="cell">, criando div na memória
+                    div.onClick = () =>{
+                        if(!div.textContent && currentSymbol && gameActive && currentSymbol === playerSymbol)
+                        {
+                            ws.send(JSON.stringify({type: "play", index: i, symbol: playerSymbol}));
+                        }
+                    };
 
+                    board.appendChild(div); // coloca efetivamente a div no tabuleiro
+                    return div
+                });
+
+                function updateStatus()
+                {
+                    if(!playerSymbol) // se não tiver símbolo, entra aqui
+                    {
+                        status.textContent = "Você é um espectador e não pode jogar";
+                    }
+                    else if(!gameActive) // se o jogo não estiver ativo, entra aqui
+                    {
+                        status.textContent = "Jogo Encerrado";
+                    }
+                    else if(currentSymbol === playerSymbol) // se o símbolo atual for o mesmo de um jogador, entra aqui
+                    {
+                        status.textContent = "Sua vez de jogar: " + playerSymbol;
+                    } 
+                    else 
+                    {
+                        status.textContent = "Aguarde a sua vez de jogar";
+                    }
+
+                }
+
+                restartBtn.onClick = () =>{
+                    ws.send(JSON.stringify({type: "restart"}))   // envia para o servidor um objeto JSON
+                    restartBtn.style.display = "none";
+                };
+
+                ws.onMessage = (event) =>{
+                    const data = JSON.parse(event.data);
+                    if(data.type === "assign")
+                    {
+                        playerSymbol = data.symbol;
+
+                        if(!playerSymbol)
+                        {
+                           alert("Sala cheia! Você será um espectador.");
+                           updateStatus();
+                        }
+
+                        if(data.type == "state")
+                        {
+                            data.board.forEach((sym, i) => cells[i].textContent = sym || "");
+                            currentSymbol = data.currentPlayer;
+                            gameActive = data.gameActive !== false;
+                            updateStatus();
+
+                            if(gameActive)
+                            {
+                                restartBtn.style.display = "none";
+                            }
+                        }
+
+                        if(data.type === "play")
+                        {
+                            cells[data.index].textContent = data.symbol;
+                            currentSymbol = data.next;
+                            updateStatus();
+                        }
+
+                        if(data.type === "gameOver")
+                        {
+                            data.board.forEach((sym, i) => cells[i].textContent = sym || "");
+                            gameActive = false;
+                            
+                            if(data.winner)
+                            {
+                                alert(`Jogador ${data.winner} venceu!`);
+                            }
+                            else 
+                            {
+                                alert("Empate!");
+                            }
+
+                            currentSymbol = null;
+                            updateStatus();
+                            restartBtn.style.display = "inline-block";
+                        }
+                    }
+                }
             });
         </script>
     </body>

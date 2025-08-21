@@ -60,7 +60,7 @@ wss.on("connection", (ws)=>{
         // telespectadores
         ws.send(JSON.stringify({type: "assign", symbol: null}));
     }
-});
+
 
 // mostrar o estado atual do jogo para os jogadores
 ws.send(JSON.stringify({type: "state", board, currentPlayer, gameActive}))
@@ -72,9 +72,10 @@ ws.on("close", ()=>{
     if(index !== -1)
     {
         // remover o jogador que se desconectou
-        players.slice(index, 1);
+        players.splice(index, 1);
         currentPlayer = "X";
         gameActive = true;
+        broadCast({type: "gameOver", board, currentPlayer, gameActive, reason: "disconnect"})
         broadCast({type: "state", board, currentPlayer, gameActive})
     }
 });
@@ -104,40 +105,41 @@ ws.on("message", (msg)=>{
         const{index, symbol} = data; // descontrução para evitar usar "data.x"
         const player = players.find(p => p.ws === ws);
 
-        // se encontrou jogador ou se o símbolo do jogador for diferente 
-        if(!player || player.symbol !== symbol)
-        {
-            return;
-        }
+            // se encontrou jogador ou se o símbolo do jogador for diferente 
+            if(!player || player.symbol !== symbol)
+            {
+                return;
+            }
 
-        // verificando se a casa do tabuleiro está vazia
-        if(symbol === currentPlayer && board[index] == null)
-        {
-            // preenchendo a casa com o respectivo símbolo
-            board[index] = symbol;
-        }
+            // verificando se a casa do tabuleiro está vazia
+            if(symbol === currentPlayer && board[index] == null)
+            {
+                // preenchendo a casa com o respectivo símbolo
+                board[index] = symbol;
+            
 
-        // verificando se há vencedor
-        if(checkWin(board, symbol))
-        {
-            broadCast({type: "gameOver", winner: symbol, board});
-            gameActive = false;
-            currentPlayer = null;
-        }   
-        // verificando se ainda há casas disponíveis no tabuleiro
-        else if(board.every(cell => cell !== null)) 
-        {
-            broadCast({type: "gameOver", winner: null, board});
-            gameActive = false;
-            currentPlayer = null;
-        }
-        // mudando a vez após o player jogar
-        else 
-        {
-            currentPlayer = currentPlayer === "X" ? "O" : "X";
-            broadCast({type: "play", index, symbol, next: currentPlayer, board});
-        }
-    }
+            // verificando se há vencedor
+            if(checkWin(board, symbol))
+            {
+                broadCast({type: "gameOver", winner: symbol, board});
+                gameActive = false;
+                currentPlayer = null;
+            }   
+            // verificando se ainda há casas disponíveis no tabuleiro
+            else if(board.every(cell => cell !== null)) 
+            {
+                broadCast({type: "gameOver", winner: null, board});
+                gameActive = false;
+                currentPlayer = null;
+            }
+            // mudando a vez após o player jogar
+            else 
+            {
+                currentPlayer = currentPlayer === "X" ? "O" : "X";
+                broadCast({type: "play", index, symbol, next: currentPlayer, board});
+            }
+        }}
+    });
 });
 
 server.listen(3000, () => console.log("Jogo da velha rodando em http://localhost:3000"));

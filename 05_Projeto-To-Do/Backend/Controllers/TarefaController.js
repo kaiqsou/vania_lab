@@ -39,11 +39,48 @@ export default class tarefaController{
         {
             // inserir tarefa no mongo
             const novaTarefa = await tarefa.save();
-            res.status(200).json({message: "Tarefa inserida com sucesso!", novaTarefa});   
+            res.status(201).json({message: "Tarefa inserida com sucesso!", novaTarefa});   
         } 
         catch (error) 
         {
-            res.status(422).json({message: "Erro ao inserir a tarefa"});
+            res.status(400).json({message: "Erro ao inserir a tarefa"});
+        }
+    }
+
+    static async getAll(req, res)
+    {
+        const {page} = req.body;
+
+        const encontrar = await Tarefa.find().skip((page - 1) * 2).limit(2);
+        res.status(200).json(encontrar);
+    }
+
+    static async remove(req, res)
+    {
+        const id = req.params.id;
+        const ObjectId = Types.ObjectId;
+
+        // verifica se o id é do tipo aceitável pro mongo
+        if(!ObjectId.isValid(id))
+        {
+            return res.status(422).json({message: "Id inválido"});
+        }
+
+        try 
+        {
+            const tarefa = await Tarefa.findOne({_id: id});
+            
+            if (!tarefa)
+            {
+                return res.status(404).json({message: "Tarefa não encontrada!"});
+            }
+
+            await Tarefa.findByIdAndDelete(id);
+            res.status(200).json({message: "Tarefa removida com sucesso!"});
+        } 
+        catch (error) 
+        {
+            res.status(500).json({message: "Problema ao remover tarefa."});
         }
     }
 }

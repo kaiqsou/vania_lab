@@ -5,9 +5,9 @@ import TarefaController from "../Controllers/TarefaController.js";
 const routes = Router();
 
 // Criando rotas
-routes.post("/Create", TarefaController.create); // para chamar um método estático, precisa informar o nome da classe - nesse caso, chamando o método create
+routes.post("/create", TarefaController.create); // para chamar um método estático, precisa informar o nome da classe - nesse caso, chamando o método create
 routes.get("/getAll", TarefaController.getAll); // pegar todas as tarefas
 routes.delete("/:id", TarefaController.remove); // excluir determinada tarefa com ID
-routes.get("/:id", TarefaController.getOne); // pegar determinada tarefa com ID
+//routes.get("/:id", TarefaController.getOne); // pegar determinada tarefa com ID
 
 export default routes;

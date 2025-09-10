@@ -1,11 +1,11 @@
 import express from "express";
 import cors from "cors"; // faz a comunicação entre back-end e front-end, que são elementos que estão em portas diferentes
-import routes from "./Routes/index.js";
+import routes from "./Routes/routes.js";
 
-const app = new express(); // instância do express
+const app = express(); // instância do express
 
 // json - fazer troca de mensagens entre back-end e front-end
-app.use(express.json)
+app.use(express.json());
 
 // cors - comunicação entre duas aplicações que rodam em portas diferentes
 app.use(cors({

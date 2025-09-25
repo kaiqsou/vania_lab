@@ -62,16 +62,25 @@ export default class tarefaController{
 
     }//fim remove
     static async getAll(req, res){
-        try {
-            const tarefas = await Tarefa.find({}).sort("-createdAt");
-            res.status(200).json({tarefas});
-        } catch (error) {
-            res.status(500).json({message:"Erro ao buscar todas as tarefas", error});
+        const {status} = req.params;
+        if(!status){
+            try {
+                const tarefas = await Tarefa.find({}).sort("-createdAt");
+    
+                res.status(200).json({tarefas});
+            } catch (error) {
+                res.status(500).json({message:"Erro ao buscar todas as tarefas", error});
+            }
         }
+
+        const tarefas = await Tarefa.find({status}).sort("-createdAt");
+        
+        res.status(200).json({tarefas});
+
     }
 
     static async getOne(req, res){
-        try {
+        
             const id = req.params.id;
             const ObjectId = Types.ObjectId;
 
@@ -79,7 +88,7 @@ export default class tarefaController{
             {
                 return res.status(422).json({message: "Id inválido"});
             }
-
+            try {
             const tarefa = await Tarefa.findById(id);
 
             if (!tarefa)
@@ -87,10 +96,10 @@ export default class tarefaController{
                 return res.status(404).json({message: "Tarefa não encontrada"})
             }
 
-            res.status(200).json({tarefa});
-        } catch (error) {
-            res.status(500).json({message: "Erro ao buscar uma tarefa", error});
-        }
+            res.status(200).json(tarefa);
+            } catch (error) {
+                res.status(500).json({message: "Erro ao buscar uma tarefa", error});
+            }
     }
 
     static async updateParcial(req, res){

@@ -27,7 +27,7 @@
                 const cells = Array.from({length: 9}, (_,i) =>{
                     const div = document.createElement("div");
                     div.className = "cell" // é tipo <div class="cell">, criando div na memória
-                    div.onClick = () =>{
+                    div.onclick = () =>{
                         if(!div.textContent && currentSymbol && gameActive && currentSymbol === playerSymbol)
                         {
                             ws.send(JSON.stringify({type: "play", index: i, symbol: playerSymbol}));
@@ -59,12 +59,12 @@
 
                 }
 
-                restartBtn.onClick = () =>{
+                restartBtn.onclick = () =>{
                     ws.send(JSON.stringify({type: "restart"}))   // envia para o servidor um objeto JSON
                     restartBtn.style.display = "none";
                 };
 
-                ws.onMessage = (event) =>{
+                ws.onmessage = (event) =>{
                     const data = JSON.parse(event.data);
                     if(data.type === "assign")
                     {
@@ -75,48 +75,47 @@
                            alert("Sala cheia! Você será um espectador.");
                            updateStatus();
                         }
+                    }
+                    if(data.type == "state")
+                    {
+                        data.board.forEach((sym, i) => cells[i].textContent = sym || "");
+                        currentSymbol = data.currentPlayer;
+                        gameActive = data.gameActive !== false;
+                        updateStatus();
 
-                        if(data.type == "state")
+                        if(gameActive)
                         {
-                            data.board.forEach((sym, i) => cells[i].textContent = sym || "");
-                            currentSymbol = data.currentPlayer;
-                            gameActive = data.gameActive !== false;
-                            updateStatus();
-
-                            if(gameActive)
-                            {
-                                restartBtn.style.display = "none";
-                            }
-                        }
-
-                        if(data.type === "play")
-                        {
-                            cells[data.index].textContent = data.symbol;
-                            currentSymbol = data.next;
-                            updateStatus();
-                        }
-
-                        if(data.type === "gameOver")
-                        {
-                            data.board.forEach((sym, i) => cells[i].textContent = sym || "");
-                            gameActive = false;
-                            
-                            if(data.winner)
-                            {
-                                alert(`Jogador ${data.winner} venceu!`);
-                            }
-                            else 
-                            {
-                                alert("Empate!");
-                            }
-
-                            currentSymbol = null;
-                            updateStatus();
-                            restartBtn.style.display = "inline-block";
+                            restartBtn.style.display = "none";
                         }
                     }
+
+                    if(data.type === "play")
+                    {
+                        cells[data.index].textContent = data.symbol;
+                        currentSymbol = data.next;
+                        updateStatus();
+                    }
+
+                    if(data.type === "gameOver")
+                    {
+                        data.board.forEach((sym, i) => cells[i].textContent = sym || "");
+                        gameActive = false;
+                            
+                        if(data.winner)
+                        {
+                            alert(`Jogador ${data.winner} venceu!`);
+                        }
+                        else 
+                        {
+                            alert("Empate!");
+                        }
+
+                        currentSymbol = null;
+                        updateStatus();
+                        restartBtn.style.display = "inline-block";
+                    }}
                 }
-            });
+            );
         </script>
     </body>
 </html>

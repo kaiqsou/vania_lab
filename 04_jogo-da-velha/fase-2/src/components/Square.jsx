@@ -3,8 +3,7 @@ import react from "react";
 export default function Square({value, onClick, disabled})
 {
     return(
-        <button className="square" onClick={onClick} disabled={disabled}>
-            {value}
-        </button>
+        <button className="square" onClick={onClick} 
+        disabled={disabled || value}>{value}</button>
     )
 }

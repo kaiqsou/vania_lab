@@ -24,7 +24,7 @@ let board = Array(9).fill(null);
 let gameActive = true;
 const players = [];
 
-function broadCast() // função para enviar mensagens para todos os usuarios no jogo
+function broadCast(data) // função para enviar mensagens para todos os usuarios no jogo
 {
     wss.clients.forEach(client => {     // vai percorrer os clients
         if(client.readyState == client.OPEN)    // se estiver conectado, executa aqui
@@ -75,6 +75,7 @@ ws.on("close", ()=>{
         players.splice(index, 1);
         currentPlayer = "X";
         gameActive = true;
+        board = Array(9).fill(null);
         broadCast({type: "gameOver", board, currentPlayer, gameActive, reason: "disconnect"})
         broadCast({type: "state", board, currentPlayer, gameActive})
     }

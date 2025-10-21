@@ -6,14 +6,12 @@ let currentPlayer = "X";
 let board = Array(9).fill(null);
 const players = [];
 
-// Função para enviar mensagens para todos os usuários, pegando eles de dentro do array players
+// Função para enviar mensagens para todos os usuários
 function broadCast(data)
 {
-    players.forEach(player => 
-    {
-        if(player.readyState == WebSocket.OPEN)
-        {
-            player.ws.send(JSON.stringify(data));
+    wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(data));
         }
     });
 }
@@ -24,10 +22,11 @@ wss.on("connection", (ws)=>
         if(players.length < 2)
         {
             // Jogadores
-            console.log(`Jogador ${symbol} entrou. Número de jogadores: ${players.length}`);
             const symbol = players.length == 0 ? "X" : "O";
-            players.push({ws, symbol});
+            players.push({ws,symbol});
+            console.log(`Jogador ${symbol} entrou. Número de jogadores: ${players.length}`);
             ws.send(JSON.stringify({type:"assign", symbol}));
+            ws.send(JSON.stringify({type:"update", board, next:currentPlayer}));
         }
         else
         {
@@ -53,7 +52,8 @@ wss.on("connection", (ws)=>
             console.log(`Jogo terminou! O jogador ${desconnectSymbol} se desconectou.`);
             broadCast({ type: 'info', message: `Jogo terminou! O jogador ${desconnectSymbol} se desconectou.` });
             broadCast({ type: 'restart', board, currentPlayer });
-        }});
+        }
+    });
         
     ws.on("message", (msg) => {
         const data = JSON.parse(msg);
@@ -63,7 +63,7 @@ wss.on("connection", (ws)=>
             board = Array(9).fill(null);
             currentPlayer = "X";
 
-            broadCast({type: "restart", board, currentPlayer});
+            broadCast({type: "restart", board, next:currentPlayer});
             return;
         }
 
@@ -74,7 +74,7 @@ wss.on("connection", (ws)=>
                 board[data.index] = data.symbol;
                 currentPlayer = data.symbol === "X" ? "O" : "X";
 
-                broadCast({type: "update", board, next: currentPlayer});
+                broadCast({type: "update", board, next:currentPlayer});
             }
         };
     });

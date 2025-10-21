@@ -5,7 +5,7 @@ import Board from './components/Board';
 import Scoreboard from './components/Scoreboard';
 import {ToastContainer, toast} from "react-toastify";
 import "./index.css";
-import "react-toastify/ReactToastify.css";
+import "react-toastify/dist/ReactToastify.css";
 
 
 function checkWin(board)
@@ -22,8 +22,8 @@ function checkWin(board)
   // finaliza aqui caso haja vencedores e retorna o vencedor (O ou X)
   if (winnerLine) return board[winnerLine[0]];
 
-  // finaliza aqui caso haja empate e retorna 'empate'
-  if (board = every(bo => bo !== null)) return "draw";
+  // finaliza aqui caso haja empate e retorna 'empate' - o every verifica todas as possibilidades
+  if (board.every(bo => bo !== null)) return "draw";
 
   // retorna null se não há vencedores nem empate ainda
   return null;
@@ -34,18 +34,22 @@ function App() {
   const [currentPlayer, setCurrentPlayer] = useState("X");
   const [mySymbol, setMySymbol] = useState(null);
   const [scores, setScores] = useState({x: 0, o: 0, draw: 0});
+  const [ws, setWs] = useState(null); // Incluindo
 
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:3000");
-    
     setWs(socket);
+
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
       // verificando assign
       if (data.type === "assign")
       {
-        if (!data.symbol) { toast.success("Você é um espectador e não pode jogar"); }
+        if (!data.symbol) 
+        { 
+          toast.success("Você é um espectador e não pode jogar"); 
+        }
         else 
         {
           setMySymbol(data.symbol);
@@ -91,12 +95,44 @@ function App() {
     return() => socket.close();
   }, [])
 
-  return (
-    <div>
-      <Board />
-      <Scoreboard />
+  // Reagir e atualizar a exibição
+  const winner = checkWin(board);
+  const handlePlay = (index) => {
+    if (ws && ws.readyState === 1 && !board[index] && !checkWin(board))
+    {
+      ws.send(JSON.stringify({type:"play", index, symbol:mySymbol}));
+    }
+  }
+
+  const handleRestart = () => {
+    if(ws && ws.readyState === 1)
+    {
+      ws.send(JSON.stringify({type: "restart"}));
+    }
+  }
+
+  return(
+    <div className="game">
+      <h1>Jogo da Velha</h1>
+
+      <Scoreboard scores={scores} />
+      <Board 
+        board={board}
+        onPlay={handlePlay}
+        disabled={!!winner || currentPlayer !== mySymbol}
+        />
+
+        {winner && (
+          <div className="game-status">
+            <p>
+              {winner === "draw" ? "Empate":`Vencedor: ${winner}`}
+            </p>
+            <button onClick={handleRestart}>Jogar Novamente</button>
+          </div>
+        )}
+        <ToastContainer position="top-center" autoClose={4000}/>
     </div>
-  )
+  );
 }
 
 export default App

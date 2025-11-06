@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client'; 
+import { PrismaClient, Prisma, Perfil } from '@prisma/client'; 
 import * as argon2 from 'argon2'; 
 import jwt from 'jsonwebtoken';
 
@@ -69,8 +69,15 @@ export const login = async(req:Request, res:Response)=>{
             maxAge: JWT_EXPIRATION_MS
         });
         return res.status(200).json({
-            message:"Login com sucesso"
-        })
+            message: 'Login realizado com sucesso. Token salvo em cookie.',
+            usuario: {
+                id: usuario.id, 
+                nome: usuario.nome, 
+                email: usuario.email, 
+                perfil: usuario.perfil,
+            },
+            token: token
+        });
     }
     catch(error){
         console.log("Erro no processo login", error);
@@ -81,3 +88,32 @@ export const logout = async(req:Request, res:Response)=>{
     res.clearCookie("jwt");
     return res.status(200).json({message:"Logout com sucesso"});
 };
+
+export const admUser = async() => {
+    let nome = "Kaique"
+    let email = "kaique@hotmail.com";
+    let senha = "Senha123@";
+    let perfil = Perfil.Admin;
+
+    var userExist = await prisma.usuario.findFirstOrThrow({where: { email },});
+    if (userExist) return;
+
+    try {
+        const hashedPassword = await argon2.hash(senha);
+    
+        const novoUsuario = await prisma.usuario.create({
+          data: {
+            nome,
+            email,
+            senha: hashedPassword,
+            perfil
+          },
+        });
+
+        console.log("Usuário criado! ", novoUsuario)
+      } catch (error) {
+        console.error(error);
+      } finally {
+        await prisma.$disconnect();
+      }
+}
